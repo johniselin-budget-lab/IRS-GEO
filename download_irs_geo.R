@@ -17,6 +17,11 @@
 #                      county_{year}_noagi.csv.gz County income, county totals
 #   zip/               zip_{year}_agi.csv.gz      ZIP code data, by AGI class
 #                      zip_{year}_noagi.csv.gz    ZIP code data, ZIP totals
+#   national/by_size/  income_sources_{year}.xls  SOI Complete-Report basic
+#                      capital_assets_{year}.xls  tables by size of AGI, NATIONAL
+#                      income_tax_items_{year}.xls (no geography) -- the top-of-
+#                      marital_status_{year}.xls   distribution anchor for the
+#                      itemized_deductions_{year}.xls geographic reweighting
 #   manifest.csv       path, source url, year, bytes, md5, retrieval date
 #
 # SOI file-naming quirks encoded below (verified against irs.gov 2026-07-12):
@@ -101,6 +106,26 @@ targets = function(year) {
          to  = sprintf('zip/zip_%d_agi.csv.gz', year),              gz = TRUE),
     list(url = sprintf('%szpallnoagi.csv', yy),
          to  = sprintf('zip/zip_%d_noagi.csv.gz', year),            gz = TRUE),
+
+    # --- National companion tables (by size of AGI) -----------------------
+    # SOI Complete-Report (Pub 1304) basic tables, NATIONAL only (no geography).
+    # These are the distributional backbone the geographic files lack: they
+    # resolve AGI classes up to $10,000,000+ with full sources of income, so
+    # they anchor the top of the distribution when the state x AGI (HT2) files
+    # are reweighted. Published as .xls, not CSV -> stored raw (readxl reads
+    # .xls directly; gzip would break direct reads). Table 1.4A begins TY2012
+    # (2011 404s and is skipped). Naming: {yy}in{tbl}{suffix}.xls. See
+    # notes/national_bysize.md for the table -> filename map and gotchas.
+    list(url = sprintf('%sin11si.xls',  yy),
+         to  = sprintf('national/by_size/income_tax_items_%d.xls',    year), gz = FALSE),  # T1.1
+    list(url = sprintf('%sin12ms.xls',  yy),
+         to  = sprintf('national/by_size/marital_status_%d.xls',      year), gz = FALSE),  # T1.2
+    list(url = sprintf('%sin14ar.xls',  yy),
+         to  = sprintf('national/by_size/income_sources_%d.xls',      year), gz = FALSE),  # T1.4
+    list(url = sprintf('%sin14acg.xls', yy),
+         to  = sprintf('national/by_size/capital_assets_%d.xls',      year), gz = FALSE),  # T1.4A
+    list(url = sprintf('%sin21id.xls',  yy),
+         to  = sprintf('national/by_size/itemized_deductions_%d.xls', year), gz = FALSE),  # T2.1
 
     # Documentation, saved alongside the data
     list(url = sprintf('%sinstatesharesdocguide.pdf', yy),

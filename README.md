@@ -3,13 +3,19 @@
 Downloader for an organized mirror of the IRS SOI **individual income tax
 data by geographic area**:
 https://www.irs.gov/statistics/soi-tax-stats-data-by-geographic-area
+plus a small set of **national companion tables by size of AGI** (Complete
+Report / Pub 1304 basic tables) that resolve the top of the distribution
+finely — carried because the geographic files stop at a `$1M+` class and
+downstream reweighting needs the finer national top as an anchor.
 
 This repo holds the **code only** — data is downloaded on demand, either into
 the repo's own (gitignored) `data/` folder or to a separate location of your
 choosing. All source files are U.S. federal government works (public domain).
-Data is stored as gzipped CSVs exactly as published by SOI (no
+Geographic files are stored as gzipped CSVs exactly as published by SOI (no
 transformation); R and most tools read `.csv.gz` directly
-(`readr::read_csv('file.csv.gz')`).
+(`readr::read_csv('file.csv.gz')`). The national by-size tables are published
+as `.xls` and stored **raw, un-gzipped** (`readxl::read_excel()` reads them
+directly).
 
 ## Usage
 
@@ -39,6 +45,11 @@ county/             county_{year}_agi.csv.gz          County income data, by AGI
                     county_{year}_noagi.csv.gz        County income data, county totals
 zip/                zip_{year}_agi.csv.gz             ZIP code data, by AGI class
                     zip_{year}_noagi.csv.gz           ZIP code data, ZIP totals
+national/by_size/   income_sources_{year}.xls         SOI Complete-Report basic tables
+                    capital_assets_{year}.xls         by size of AGI, NATIONAL (no geo):
+                    income_tax_items_{year}.xls       the fine top-of-distribution anchor
+                    marital_status_{year}.xls         (AGI classes up to $10M+). Raw .xls.
+                    itemized_deductions_{year}.xls
 manifest.csv        path, source url, year, bytes, md5, retrieval date
 ```
 
@@ -57,6 +68,9 @@ the files:
   combined-IRA/pension one-off)
 - [notes/county.md](notes/county.md) — county income data
 - [notes/zip.md](notes/zip.md) — ZIP code data
+- [notes/national_bysize.md](notes/national_bysize.md) — national Complete-Report
+  tables by size of AGI (table→filename map, the fine top brackets, $thousands
+  units, multi-row headers, TCJA-2018 combined IRA/pension one-off)
 
 The SOI documentation guides themselves are downloaded alongside the data
 (`*docguide*` files in each destination folder).
@@ -69,6 +83,8 @@ The SOI documentation guides themselves are downloaded alongside the data
 | State percentile shares | 2013–2022 | `{yy}instateshares.csv` (+ `...docguide.pdf`) |
 | County income | 2011, 2013–2022 | `{yy}incyallagi.csv` / `{yy}incyallnoagi.csv` (2012 and earlier are zip archives, not pulled) |
 | ZIP code data | 2011–2022 | `{yy}zpallagi.csv` / `{yy}zpallnoagi.csv` |
+| National by-size 1.1/1.2/1.4/2.1 | 2011–2022 | `{yy}in11si.xls` / `in12ms` / `in14ar` / `in21id` (`.xls`) |
+| National by-size 1.4A (cap assets) | 2012–2022 | `{yy}in14acg.xls` (`.xls`; 2011 unpublished) |
 
 Other HT2 notes: the `N2` column is *number of exemptions* through tax year
 2017 and *number of individuals* from 2018 (TCJA); state rows include the 50
@@ -83,3 +99,7 @@ When SOI publishes a new year, extend the range:
   branch): `state/HT2/` supplies the filer calibration targets for the split
   state weights; `county/` is the planned target source for sub-state
   (locality) weights — see `other/state_tax_research/` there.
+- **Affordability-Index** (Budget-Lab-Yale/Affordability-Index): `state/HT2/`
+  and `state/percentile/` are the state × AGI reweight targets; `national/
+  by_size/` anchors the top of the distribution when adjusting top-coded /
+  underreported ACS incomes — see its `docs/04_topcode_income_notes.md`.
